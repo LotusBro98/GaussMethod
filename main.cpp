@@ -1,8 +1,7 @@
 #include <iostream>
-#include <cstdlib>
-#include <exception>
 #include <fstream>
 #include <iomanip>
+#include <cmath>
 
 class Matrix
 {
@@ -125,6 +124,81 @@ class Matrix
         }
     }
 
+    Matrix * subMatrix(int i0, int j0, int n, int m)
+    {
+        Matrix * sub = new Matrix(n, m);
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                sub->a(i, j) = a(i0 + i, j0 + j);
+            }
+        }
+
+        return sub;
+    }
+
+    friend Matrix * operator * (Matrix & A, Matrix & B)
+    {
+        if (A._m != B._n)
+            return nullptr;
+
+        Matrix * C = new Matrix(A._n, B._m);
+        for (int i = 0; i < C->_n; ++i) {
+            for (int j = 0; j < C->_m; ++j) {
+                C->a(i, j) = 0;
+                for (int k = 0; k < A._m; ++k) {
+                    C->a(i, j) += A.a(i, k) * B.a(k, j);
+                }
+            }
+        }
+
+        return C;
+    }
+
+    friend Matrix * operator - (Matrix & A, Matrix & B)
+    {
+        if (A._n != B._n || A._m != B._m)
+            return nullptr;
+
+        Matrix * C = new Matrix(A._n, A._m);
+        for (int i = 0; i < A._n; ++i) {
+            for (int j = 0; j < A._m; ++j) {
+                C->a(i, j) = A.a(i, j) - B.a(i, j);
+            }
+        }
+
+        return C;
+    }
+
+    friend Matrix * operator + (Matrix & A, Matrix & B)
+    {
+        if (A._n != B._n || A._m != B._m)
+            return nullptr;
+
+        Matrix * C = new Matrix(A._n, A._m);
+        for (int i = 0; i < A._n; ++i) {
+            for (int j = 0; j < A._m; ++j) {
+                C->a(i, j) = A.a(i, j) + B.a(i, j);
+            }
+        }
+
+        return C;
+    }
+
+    double vectorNormSqrt()
+    {
+        double len2 = 0;
+        if (_n == 1)
+            for (int j = 0; j < _m; ++j)
+                len2 += a(0, j) * a(0, j);
+        else if (_m == 1)
+            for (int i = 0; i < _n; ++i)
+                len2 += a(i, 0) * a(i, 0);
+        else
+            return -1;
+
+        return std::sqrt(len2);
+    }
+
     ~Matrix()
     {
         delete(_a);
@@ -166,21 +240,25 @@ int main(int argc, char * argv[])
         return 1;
     }
 	
-	Matrix * mat = new Matrix(file);
-    Matrix * vec = new Matrix(mat->n(), 1);
-    for (int i = 0; i < mat->n(); ++i) {
-        vec->a(i, 0) = i + 1;
-    }
+	Matrix A = Matrix(file);
 
-    Matrix * expanded = *mat | *vec;
+    Matrix x = Matrix(A.n(), 1);
+    for (int i = 0; i < A.n(); ++i)
+        x.a(i, 0) = i + 1;
 
-	std::cout << expanded << "\n";
+    Matrix * b = A * x;
+
+    Matrix * expanded = A | *b;
 
     expanded->gauss();
 
-    std::cout << expanded;
+    Matrix * y = expanded->subMatrix(0, A.m(), A.n(), 1);
 
-    //file.close();
+    Matrix * eps = *y - x;
+
+    std::cout << eps->vectorNormSqrt() << "\n";
+
+    file.close();
 	return 0;
 }
 
