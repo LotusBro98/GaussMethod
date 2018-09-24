@@ -38,7 +38,7 @@ class Matrix
             }
             os << std::endl;
         }
-
+        os << std::endl;
         return os;
     }
 
@@ -199,6 +199,16 @@ class Matrix
         return std::sqrt(len2);
     }
 
+    Matrix * copy()
+    {
+        Matrix * A = new Matrix(_n, _m);
+        A->_a = new double[_n * _m];
+
+        std::copy(_a, _a + _n * _m,  A->_a);
+
+        return A;
+    }
+
     ~Matrix()
     {
         delete(_a);
@@ -250,11 +260,22 @@ int main(int argc, char * argv[])
 
     Matrix * expanded = A | *b;
 
-    expanded->gauss();
+    Matrix * gaussed = expanded->copy();
+    gaussed->gauss();
 
-    Matrix * y = expanded->subMatrix(0, A.m(), A.n(), 1);
+    Matrix * y = gaussed->subMatrix(0, A.m(), A.n(), 1);
 
     Matrix * eps = *y - x;
+
+    // --- Debug prints ---
+    //std::cout << &A;
+    //std::cout << &x;
+    //std::cout << b;
+    //std::cout << expanded;
+    //std::cout << gaussed;
+    //std::cout << y;
+    //std::cout << eps;
+    // --------------------
 
     std::cout << eps->vectorNormSqrt() << "\n";
 
